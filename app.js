@@ -47,8 +47,16 @@ const challengeBank = [
 
 function homeView() {
   return `
-    <section class="card">
-      <h2 class="section-title scribble">HOW’S WORK FEELING TODAY?</h2>
+    <section class="card mood-card">
+      <h2 class="section-title mood-question" aria-label="How’s work feeling today?">
+        <span class="highlight-line">
+          <span>HOW’S</span><span>WORK</span><span>FEELING</span>
+        </span>
+        <span class="highlight-line">
+          <span>TODAY?</span>
+        </span>
+        <span class="question-rays" aria-hidden="true"><i></i><i></i><i></i></span>
+      </h2>
       <p class="micro">No wrong answers. Some concerning ones.</p>
       <div class="mood-grid">
         ${moods.map(([id,face,title,sub]) => `<button class="mood ${state.mood===id?'selected':''}" data-mood="${id}"><span class="face">${face}</span><strong>${title}</strong><small>${sub}</small></button>`).join('')}
