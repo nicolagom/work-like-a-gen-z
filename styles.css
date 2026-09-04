@@ -150,7 +150,7 @@ mark { background: none; color: var(--acid); }
 .streak-card:after { content:""; position:absolute; width:180px; height:180px; border-radius:50%; right:-85px; top:-90px; background: radial-gradient(circle, rgba(199,255,26,.28), transparent 70%); }
 .streak-row { display:flex; justify-content:space-between; gap:14px; align-items:flex-end; }
 .streak-row > div:first-child {
-  transform: translateY(-9px);
+  transform: translateY(-12px);
 }
 .streak-number { font-size: 43px; font-weight: 1000; line-height: .95; }
 .streak-number span { color: var(--acid); }
