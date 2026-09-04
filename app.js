@@ -62,7 +62,7 @@ function homeView() {
           <div class="streak-number">${state.streak} <span>DAYS</span></div>
           <div class="micro">Personal best: ${state.best} days</div>
         </div>
-        <div class="sticky">PEOPLE PLEASING IS SO 2010.<small>♡</small></div>
+        <div class="sticky">people<br>pleasing<br>is so 2010.<small>♡</small></div>
       </div>
     </section>
 
