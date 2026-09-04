@@ -1,0 +1,9 @@
+{
+  "name": "Work Like a Gen Z",
+  "short_name": "Work Like Gen Z",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "description": "Your Gen Z champion for a better working life."
+}

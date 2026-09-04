@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#090909" />
+  <title>Work Like a Gen Z — Prototype</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">WORK LIKE A</div>
+        <h1>GEN <span>Z</span></h1>
+        <p>Your Gen Z champion for a <mark>better working life.</mark></p>
+      </div>
+      <button class="champion-badge" id="championBadge" aria-label="Open your Gen Z Champion">
+        <div class="avatar">😎</div>
+        <span>boundaries,<br>baby.</span>
+      </button>
+    </header>
+
+    <main id="viewRoot" class="view-root" aria-live="polite"></main>
+
+    <nav class="bottom-nav" aria-label="Primary navigation">
+      <button class="nav-item active" data-view="home"><span>⌂</span><small>HOME</small></button>
+      <button class="nav-item" data-view="champion"><span>▣</span><small>CHAMPION</small></button>
+      <button class="nav-item" data-view="challenges"><span>ϟ</span><small>CHALLENGES</small></button>
+      <button class="nav-item" data-view="streaks"><span>♨</span><small>STREAKS</small></button>
+      <button class="nav-item" data-view="you"><span>○</span><small>YOU</small></button>
+    </nav>
+  </div>
+
+  <dialog id="actionModal" class="modal">
+    <form method="dialog" class="modal-card" id="modalForm">
+      <button class="modal-close" value="cancel" aria-label="Close">×</button>
+      <div id="modalContent"></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="app.js"></script>
+  <script>if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js');</script>
+</body>
+</html>
