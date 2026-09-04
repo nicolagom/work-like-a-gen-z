@@ -57,6 +57,67 @@ mark { background: none; color: var(--acid); }
 .card { background: linear-gradient(160deg, #151515, #0f0f0f); border: 1px solid #252525; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
 .section-title { margin: 0 0 14px; font-size: 24px; line-height: 1; font-weight: 950; letter-spacing: -.04em; }
 .micro { color: var(--muted); font-size: 12px; }
+
+/* Mood question: chunky highlighter treatment */
+.mood-card {
+  position: relative;
+  overflow: hidden;
+}
+.mood-question {
+  position: relative;
+  display: inline-grid;
+  gap: 4px;
+  margin: 0 0 11px;
+  padding-right: 36px;
+  font-size: clamp(21px, 6.3vw, 29px);
+  line-height: .94;
+  letter-spacing: -.055em;
+}
+.highlight-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+}
+.highlight-line > span {
+  display: inline-block;
+  padding: 3px 5px 4px;
+  background: var(--acid);
+  color: #070707;
+  box-shadow: 0 0 0 1px rgba(199,255,26,.07);
+}
+.highlight-line:first-child > span:nth-child(1) { transform: rotate(-2deg); }
+.highlight-line:first-child > span:nth-child(2) { transform: rotate(.7deg); }
+.highlight-line:first-child > span:nth-child(3) { transform: rotate(-.8deg); }
+.highlight-line:nth-child(2) > span { transform: rotate(-1.5deg); }
+
+.question-rays {
+  position: absolute;
+  right: 1px;
+  top: 14px;
+  width: 25px;
+  height: 36px;
+}
+.question-rays i {
+  position: absolute;
+  right: 0;
+  width: 19px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--pink);
+  transform-origin: right center;
+}
+.question-rays i:nth-child(1) { top: 2px; transform: rotate(-25deg); }
+.question-rays i:nth-child(2) { top: 15px; transform: rotate(0deg); }
+.question-rays i:nth-child(3) { top: 28px; transform: rotate(25deg); }
+
+@media (max-width: 350px) {
+  .mood-question { font-size: 20px; padding-right: 31px; }
+  .highlight-line { gap: 3px; }
+  .highlight-line > span { padding: 3px 4px 4px; }
+}
+
 .scribble {
   text-decoration: none;
   position: relative;
