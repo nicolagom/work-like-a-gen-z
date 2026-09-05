@@ -1,0 +1,16 @@
+{
+  "name": "work-like-a-gen-z",
+  "compatibility_date": "2026-09-05",
+
+  "assets": {
+    "directory": "./"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "work-like-a-gen-z-db",
+      "database_id": "3e653a4e-22fc-4a53-a59f-544c42e1e025"
+    }
+  ]
+}
