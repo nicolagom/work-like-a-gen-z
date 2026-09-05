@@ -20,7 +20,7 @@ let state = { ...defaultState, ...JSON.parse(localStorage.getItem('wlgenz-state'
 
 const CHAMPION_DAILY_LIMIT = 5;
 const CHAMPION_LIMIT_MESSAGE = "Respectfully, that’s five. I’ve logged off. I’m your Gen Z Champion, not your personal therapist. Close the laptop. Touch grass. Come back tomorrow. Boundaries, remember?";
-const CHAMPION_STATUS_TOAST = `<span class="toast-kicker">STATUS CHANGED</span><strong>Champion is Offline until tomorrow</strong><small>On boundary leave. Please direct further chaos to your own judgement.</small>`;
+const CHAMPION_STATUS_TOAST = `<span class="toast-kicker">STATUS UPDATED</span><strong>Champion: Offline</strong><small>Boundary held. No notes. Back tomorrow.</small>`;
 
 function localDayKey() {
   const d = new Date();
@@ -44,6 +44,49 @@ function championRemaining() {
   return Math.max(0, CHAMPION_DAILY_LIMIT - state.championCount);
 }
 
+function championIsOffline() {
+  refreshChampionAllowance();
+  return state.championCount >= CHAMPION_DAILY_LIMIT;
+}
+
+function championStatusControl() {
+  const offline = championIsOffline();
+  return `
+    <div class="champion-presence">
+      <button class="status-trigger ${offline ? 'offline' : 'online'}" id="championStatusToggle" type="button" aria-expanded="false">
+        <span class="presence-dot" aria-hidden="true"></span>
+        <span class="presence-copy">
+          <strong>${offline ? 'Offline' : 'Available'}</strong>
+          <small>${offline ? 'boundary held' : '5 reads. Choose wisely.'}</small>
+        </span>
+        <span class="status-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div class="status-menu" id="championStatusMenu" hidden>
+        <div class="status-menu-title">CHAMPION STATUS</div>
+        <div class="status-option ${!offline ? 'active' : ''}">
+          <span class="status-icon available"></span>
+          <span><strong>Available</strong><small>For now.</small></span>
+        </div>
+        <div class="status-option">
+          <span class="status-emoji">🎧</span>
+          <span><strong>Focus mode</strong><small>Do not @ me.</small></span>
+        </div>
+        <div class="status-option">
+          <span class="status-emoji">☕</span>
+          <span><strong>Lunch</strong><small>Away from desk.</small></span>
+        </div>
+        <div class="status-option">
+          <span class="status-emoji">🌱</span>
+          <span><strong>Touching grass</strong><small>Literally unavailable.</small></span>
+        </div>
+        <div class="status-option ${offline ? 'active' : ''}">
+          <span class="status-icon offline"></span>
+          <span><strong>Offline</strong><small>Boundary held.</small></span>
+        </div>
+      </div>
+    </div>`;
+}
+
 function askChampion(text) {
   refreshChampionAllowance();
 
@@ -53,7 +96,7 @@ function askChampion(text) {
       state.messages.push({ role: 'bot', text: CHAMPION_LIMIT_MESSAGE });
     }
     save();
-    return false;
+    return { answered: false, justLoggedOff: false };
   }
 
   state.championCount += 1;
@@ -61,8 +104,14 @@ function askChampion(text) {
     { role: 'user', text },
     { role: 'bot', text: championReply(text) }
   );
+
+  const justLoggedOff = state.championCount === CHAMPION_DAILY_LIMIT;
+  if (justLoggedOff) {
+    state.messages.push({ role: 'bot', text: CHAMPION_LIMIT_MESSAGE });
+  }
+
   save();
-  return true;
+  return { answered: true, justLoggedOff };
 }
 
 const root = $('#viewRoot');
@@ -129,12 +178,17 @@ function homeView() {
     </section>
 
     <section class="card champion-card">
-      <h2 class="section-title">ASK YOUR<br>GEN Z CHAMPION</h2>
+      <div class="champion-card-heading">
+        <h2 class="section-title">ASK YOUR<br>GEN Z CHAMPION</h2>
+        <span class="mini-presence ${championIsOffline() ? 'offline' : 'online'}">
+          <i></i>${championIsOffline() ? 'OFFLINE' : 'AVAILABLE'}
+        </span>
+      </div>
       <p>Drop the situation. We’ll separate the actual problem from the millennial guilt spiral.</p>
       <p class="micro">${championRemaining()} of ${CHAMPION_DAILY_LIMIT} Champion reads left today. Boundaries apply to her too.</p>
       <div class="chat-entry">
-        <input id="homeChat" placeholder="My boss just messaged me at 7pm…" autocomplete="off" />
-        <button class="send-btn" id="homeSend" aria-label="Send">›</button>
+        <input id="homeChat" placeholder="${championIsOffline() ? 'Champion is offline. You’ve got this until tomorrow.' : 'My boss just messaged me at 7pm…'}" autocomplete="off" ${championIsOffline() ? 'disabled' : ''} />
+        <button class="send-btn" id="homeSend" aria-label="Send" ${championIsOffline() ? 'disabled' : ''}>${championIsOffline() ? '✓' : '›'}</button>
       </div>
     </section>
 
@@ -163,6 +217,7 @@ function championView() {
     <section class="card">
       <div class="micro">YOUR GEN Z CHAMPION</div>
       <h2 class="hero-copy">Corporate nonsense in.<br><span style="color:var(--acid)">Boundaries out.</span></h2>
+      ${championStatusControl()}
       <p class="subcopy">Prototype mode: responses are simulated locally, so you can test the interaction without an AI connection.</p>
       <span class="pill">${championRemaining()} / ${CHAMPION_DAILY_LIMIT} reads left today</span>
       <div class="chat-list" id="chatList">
@@ -172,8 +227,8 @@ function championView() {
         }).join('')}
       </div>
       <div class="stack">
-        <textarea class="screen-input" id="championInput" rows="3" placeholder="E.g. ‘My manager asked if I can just squeeze in one more thing…’"></textarea>
-        <button class="primary" id="championSend">GET THE GEN Z READ →</button>
+        <textarea class="screen-input" id="championInput" rows="3" placeholder="${championIsOffline() ? 'Champion is offline. Trust the boundary muscle you’re building.' : 'E.g. ‘My manager asked if I can just squeeze in one more thing…’'}" ${championIsOffline() ? 'disabled' : ''}></textarea>
+        <button class="primary ${championIsOffline() ? 'offline-button' : ''}" id="championSend" ${championIsOffline() ? 'disabled' : ''}>${championIsOffline() ? '○ OFFLINE • BACK TOMORROW' : 'GET THE GEN Z READ →'}</button>
       </div>
     </section>`;
 }
@@ -286,9 +341,16 @@ function openAction(type) {
 function bindView() {
   $$('[data-mood]').forEach(btn => btn.onclick = () => { state.mood=btn.dataset.mood; save(); render(); toast({fine:'Protect this energy.',much:'Noted. We reduce chaos.',urgent:'Fake urgency detector: ON.',done:'The laptop is on thin ice.'}[state.mood]); });
   $$('[data-action]').forEach(btn => btn.onclick = () => openAction(btn.dataset.action));
+  const statusToggle=$('#championStatusToggle');
+  const statusMenu=$('#championStatusMenu');
+  if(statusToggle && statusMenu) statusToggle.onclick=()=>{
+    const opening=statusMenu.hidden;
+    statusMenu.hidden=!opening;
+    statusToggle.setAttribute('aria-expanded', String(opening));
+  };
   const dc=$('#dailyChallenge'); if(dc) dc.onclick=()=>{ if(!state.challengeDone){state.challengeDone=true;state.energy+=25;state.streak+=1;state.best=Math.max(state.best,state.streak);save();render();toast('+25 main character energy');} };
-  const hs=$('#homeSend'); if(hs) hs.onclick=()=>{const i=$('#homeChat'); const text=i.value.trim(); if(!text)return; const answered=askChampion(text); setView('champion'); if(!answered) toast(CHAMPION_STATUS_TOAST, 'status');};
-  const cs=$('#championSend'); if(cs) cs.onclick=()=>{const i=$('#championInput'); const text=i.value.trim(); if(!text)return toast('Tell me what they did.'); const answered=askChampion(text); render(); if(!answered) toast(CHAMPION_STATUS_TOAST, 'status'); setTimeout(()=>{const c=$('#chatList'); if(c)c.scrollTop=c.scrollHeight;},20);};
+  const hs=$('#homeSend'); if(hs) hs.onclick=()=>{const i=$('#homeChat'); const text=i.value.trim(); if(!text)return; const result=askChampion(text); setView('champion'); if(result.justLoggedOff || !result.answered) toast(CHAMPION_STATUS_TOAST, 'status');};
+  const cs=$('#championSend'); if(cs) cs.onclick=()=>{const i=$('#championInput'); const text=i.value.trim(); if(!text)return toast('Tell me what they did.'); const result=askChampion(text); render(); if(result.justLoggedOff || !result.answered) toast(CHAMPION_STATUS_TOAST, 'status'); setTimeout(()=>{const c=$('#chatList'); if(c)c.scrollTop=c.scrollHeight;},20);};
   $$('[data-challenge]').forEach(b=>b.onclick=()=>{const id=b.dataset.challenge; if(state.completedChallenges.includes(id)){state.completedChallenges=state.completedChallenges.filter(x=>x!==id);}else{state.completedChallenges.push(id);state.energy+=15;} save();render();});
   const lw=$('#logWin'); if(lw) lw.onclick=()=>{state.streak+=1;state.best=Math.max(state.best,state.streak);state.energy+=10;save();render();toast('Boundary win logged 🔥');};
   const rd=$('#resetDemo'); if(rd) rd.onclick=()=>{localStorage.removeItem('wlgenz-state');state={...defaultState,messages:[...defaultState.messages],championDay:localDayKey(),championCount:0};render();toast('Demo reset');};
