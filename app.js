@@ -20,6 +20,7 @@ let state = { ...defaultState, ...JSON.parse(localStorage.getItem('wlgenz-state'
 
 const CHAMPION_DAILY_LIMIT = 5;
 const CHAMPION_LIMIT_MESSAGE = "Respectfully, that’s five. I’ve logged off. I’m your Gen Z Champion, not your personal therapist. Close the laptop. Touch grass. Come back tomorrow. Boundaries, remember?";
+const CHAMPION_STATUS_TOAST = `<span class="toast-kicker">STATUS CHANGED</span><strong>Champion is Offline until tomorrow</strong><small>On boundary leave. Please direct further chaos to your own judgement.</small>`;
 
 function localDayKey() {
   const d = new Date();
@@ -69,9 +70,13 @@ const modal = $('#actionModal');
 const modalContent = $('#modalContent');
 
 function save() { localStorage.setItem('wlgenz-state', JSON.stringify(state)); }
-function toast(msg) {
-  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(window.__toast); window.__toast = setTimeout(() => t.classList.remove('show'), 1900);
+function toast(msg, type='default') {
+  const t = $('#toast');
+  t.className = `toast ${type === 'status' ? 'status-toast' : ''}`.trim();
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toast);
+  window.__toast = setTimeout(() => t.classList.remove('show'), type === 'status' ? 3400 : 1900);
 }
 function setView(view) {
   state.view = view; save();
@@ -161,7 +166,10 @@ function championView() {
       <p class="subcopy">Prototype mode: responses are simulated locally, so you can test the interaction without an AI connection.</p>
       <span class="pill">${championRemaining()} / ${CHAMPION_DAILY_LIMIT} reads left today</span>
       <div class="chat-list" id="chatList">
-        ${state.messages.map(m => `<div class="bubble ${m.role}">${m.role==='bot'?'<b>Champion:</b><br>':''}${escapeHtml(m.text)}</div>`).join('')}
+        ${state.messages.map(m => {
+          const isLimit = m.role === 'bot' && m.text === CHAMPION_LIMIT_MESSAGE;
+          return `<div class="bubble ${m.role} ${isLimit ? 'limit-bubble' : ''}">${m.role==='bot' ? `${isLimit ? '<span class="limit-chip">STATUS: OFFLINE UNTIL TOMORROW</span>' : ''}<b>Champion:</b><br>` : ''}${escapeHtml(m.text)}</div>`;
+        }).join('')}
       </div>
       <div class="stack">
         <textarea class="screen-input" id="championInput" rows="3" placeholder="E.g. ‘My manager asked if I can just squeeze in one more thing…’"></textarea>
@@ -279,8 +287,8 @@ function bindView() {
   $$('[data-mood]').forEach(btn => btn.onclick = () => { state.mood=btn.dataset.mood; save(); render(); toast({fine:'Protect this energy.',much:'Noted. We reduce chaos.',urgent:'Fake urgency detector: ON.',done:'The laptop is on thin ice.'}[state.mood]); });
   $$('[data-action]').forEach(btn => btn.onclick = () => openAction(btn.dataset.action));
   const dc=$('#dailyChallenge'); if(dc) dc.onclick=()=>{ if(!state.challengeDone){state.challengeDone=true;state.energy+=25;state.streak+=1;state.best=Math.max(state.best,state.streak);save();render();toast('+25 main character energy');} };
-  const hs=$('#homeSend'); if(hs) hs.onclick=()=>{const i=$('#homeChat'); const text=i.value.trim(); if(!text)return; const answered=askChampion(text); setView('champion'); if(!answered) toast('Champion has logged off.');};
-  const cs=$('#championSend'); if(cs) cs.onclick=()=>{const i=$('#championInput'); const text=i.value.trim(); if(!text)return toast('Tell me what they did.'); const answered=askChampion(text); render(); if(!answered) toast('Champion has logged off.'); setTimeout(()=>{const c=$('#chatList'); if(c)c.scrollTop=c.scrollHeight;},20);};
+  const hs=$('#homeSend'); if(hs) hs.onclick=()=>{const i=$('#homeChat'); const text=i.value.trim(); if(!text)return; const answered=askChampion(text); setView('champion'); if(!answered) toast(CHAMPION_STATUS_TOAST, 'status');};
+  const cs=$('#championSend'); if(cs) cs.onclick=()=>{const i=$('#championInput'); const text=i.value.trim(); if(!text)return toast('Tell me what they did.'); const answered=askChampion(text); render(); if(!answered) toast(CHAMPION_STATUS_TOAST, 'status'); setTimeout(()=>{const c=$('#chatList'); if(c)c.scrollTop=c.scrollHeight;},20);};
   $$('[data-challenge]').forEach(b=>b.onclick=()=>{const id=b.dataset.challenge; if(state.completedChallenges.includes(id)){state.completedChallenges=state.completedChallenges.filter(x=>x!==id);}else{state.completedChallenges.push(id);state.energy+=15;} save();render();});
   const lw=$('#logWin'); if(lw) lw.onclick=()=>{state.streak+=1;state.best=Math.max(state.best,state.streak);state.energy+=10;save();render();toast('Boundary win logged 🔥');};
   const rd=$('#resetDemo'); if(rd) rd.onclick=()=>{localStorage.removeItem('wlgenz-state');state={...defaultState,messages:[...defaultState.messages],championDay:localDayKey(),championCount:0};render();toast('Demo reset');};
