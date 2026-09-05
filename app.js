@@ -9,12 +9,61 @@ const defaultState = {
   challengeDone: false,
   energy: 125,
   completedChallenges: [],
+  championDay: null,
+  championCount: 0,
   messages: [
     { role: 'bot', text: "Hi. I'm your Gen Z Champion. Tell me what work has done now." }
   ]
 };
 
 let state = { ...defaultState, ...JSON.parse(localStorage.getItem('wlgenz-state') || '{}') };
+
+const CHAMPION_DAILY_LIMIT = 5;
+const CHAMPION_LIMIT_MESSAGE = "Respectfully, that’s five. I’ve logged off. I’m your Gen Z Champion, not your personal therapist. Close the laptop. Touch grass. Come back tomorrow. Boundaries, remember?";
+
+function localDayKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function refreshChampionAllowance() {
+  const today = localDayKey();
+  if (state.championDay !== today) {
+    state.championDay = today;
+    state.championCount = 0;
+    save();
+  }
+}
+
+function championRemaining() {
+  refreshChampionAllowance();
+  return Math.max(0, CHAMPION_DAILY_LIMIT - state.championCount);
+}
+
+function askChampion(text) {
+  refreshChampionAllowance();
+
+  if (state.championCount >= CHAMPION_DAILY_LIMIT) {
+    const last = state.messages[state.messages.length - 1];
+    if (!last || last.text !== CHAMPION_LIMIT_MESSAGE) {
+      state.messages.push({ role: 'bot', text: CHAMPION_LIMIT_MESSAGE });
+    }
+    save();
+    return false;
+  }
+
+  state.championCount += 1;
+  state.messages.push(
+    { role: 'user', text },
+    { role: 'bot', text: championReply(text) }
+  );
+  save();
+  return true;
+}
+
 const root = $('#viewRoot');
 const modal = $('#actionModal');
 const modalContent = $('#modalContent');
@@ -77,6 +126,7 @@ function homeView() {
     <section class="card champion-card">
       <h2 class="section-title">ASK YOUR<br>GEN Z CHAMPION</h2>
       <p>Drop the situation. We’ll separate the actual problem from the millennial guilt spiral.</p>
+      <p class="micro">${championRemaining()} of ${CHAMPION_DAILY_LIMIT} Champion reads left today. Boundaries apply to her too.</p>
       <div class="chat-entry">
         <input id="homeChat" placeholder="My boss just messaged me at 7pm…" autocomplete="off" />
         <button class="send-btn" id="homeSend" aria-label="Send">›</button>
@@ -109,6 +159,7 @@ function championView() {
       <div class="micro">YOUR GEN Z CHAMPION</div>
       <h2 class="hero-copy">Corporate nonsense in.<br><span style="color:var(--acid)">Boundaries out.</span></h2>
       <p class="subcopy">Prototype mode: responses are simulated locally, so you can test the interaction without an AI connection.</p>
+      <span class="pill">${championRemaining()} / ${CHAMPION_DAILY_LIMIT} reads left today</span>
       <div class="chat-list" id="chatList">
         ${state.messages.map(m => `<div class="bubble ${m.role}">${m.role==='bot'?'<b>Champion:</b><br>':''}${escapeHtml(m.text)}</div>`).join('')}
       </div>
@@ -228,14 +279,15 @@ function bindView() {
   $$('[data-mood]').forEach(btn => btn.onclick = () => { state.mood=btn.dataset.mood; save(); render(); toast({fine:'Protect this energy.',much:'Noted. We reduce chaos.',urgent:'Fake urgency detector: ON.',done:'The laptop is on thin ice.'}[state.mood]); });
   $$('[data-action]').forEach(btn => btn.onclick = () => openAction(btn.dataset.action));
   const dc=$('#dailyChallenge'); if(dc) dc.onclick=()=>{ if(!state.challengeDone){state.challengeDone=true;state.energy+=25;state.streak+=1;state.best=Math.max(state.best,state.streak);save();render();toast('+25 main character energy');} };
-  const hs=$('#homeSend'); if(hs) hs.onclick=()=>{const i=$('#homeChat'); const text=i.value.trim(); if(!text)return; state.messages.push({role:'user',text},{role:'bot',text:championReply(text)});save();setView('champion');};
-  const cs=$('#championSend'); if(cs) cs.onclick=()=>{const i=$('#championInput'); const text=i.value.trim(); if(!text)return toast('Tell me what they did.'); state.messages.push({role:'user',text},{role:'bot',text:championReply(text)});save();render(); setTimeout(()=>{const c=$('#chatList'); if(c)c.scrollTop=c.scrollHeight;},20);};
+  const hs=$('#homeSend'); if(hs) hs.onclick=()=>{const i=$('#homeChat'); const text=i.value.trim(); if(!text)return; const answered=askChampion(text); setView('champion'); if(!answered) toast('Champion has logged off.');};
+  const cs=$('#championSend'); if(cs) cs.onclick=()=>{const i=$('#championInput'); const text=i.value.trim(); if(!text)return toast('Tell me what they did.'); const answered=askChampion(text); render(); if(!answered) toast('Champion has logged off.'); setTimeout(()=>{const c=$('#chatList'); if(c)c.scrollTop=c.scrollHeight;},20);};
   $$('[data-challenge]').forEach(b=>b.onclick=()=>{const id=b.dataset.challenge; if(state.completedChallenges.includes(id)){state.completedChallenges=state.completedChallenges.filter(x=>x!==id);}else{state.completedChallenges.push(id);state.energy+=15;} save();render();});
   const lw=$('#logWin'); if(lw) lw.onclick=()=>{state.streak+=1;state.best=Math.max(state.best,state.streak);state.energy+=10;save();render();toast('Boundary win logged 🔥');};
-  const rd=$('#resetDemo'); if(rd) rd.onclick=()=>{localStorage.removeItem('wlgenz-state');state={...defaultState,messages:[...defaultState.messages]};render();toast('Demo reset');};
+  const rd=$('#resetDemo'); if(rd) rd.onclick=()=>{localStorage.removeItem('wlgenz-state');state={...defaultState,messages:[...defaultState.messages],championDay:localDayKey(),championCount:0};render();toast('Demo reset');};
 }
 
 $$('.nav-item').forEach(btn => btn.onclick = () => setView(btn.dataset.view));
 $('#championBadge').onclick = () => setView('champion');
 
+refreshChampionAllowance();
 render();
