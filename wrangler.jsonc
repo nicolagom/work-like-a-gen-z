@@ -1,9 +1,12 @@
 {
   "name": "work-like-a-gen-z",
+  "main": "worker.js",
   "compatibility_date": "2026-09-05",
 
   "assets": {
-    "directory": "./"
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
 
   "d1_databases": [
