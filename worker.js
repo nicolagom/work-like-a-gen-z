@@ -13,6 +13,22 @@ export default {
       });
     }
 
+    if (url.pathname === "/api/streak") {
+      const result = await env.DB
+        .prepare(`
+          SELECT COUNT(*) AS wins
+          FROM boundary_wins
+          WHERE user_id = ?
+        `)
+        .bind("demo-user")
+        .first();
+
+      return Response.json({
+        user: "demo-user",
+        wins: result?.wins ?? 0
+      });
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
